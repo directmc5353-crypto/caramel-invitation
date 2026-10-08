@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2026 카라멜에셋 체육대회 초대장</title>
+<meta property="og:title" content="2026 카라멜에셋 체육대회 초대장">
+<meta property="og:description" content="2026.10.20(화) 09:00 새마을 중앙 연수원">
+<meta property="og:image" content="images/invitation-1.jpg">
+<meta name="theme-color" content="#1e7ff0">
+<style>
+:root{--sky:#1e7ff0;--sky2:#7fd3f5;--orange:#ff7a1a;--white:#fff;--ink:#0c3a73;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit;margin:0}
+html,body{height:100%}
+html{background:var(--sky)}
+body{background:linear-gradient(180deg,#1569dc 0%,#2f95f2 55%,#8fdcf3 100%);font-family:"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif;color:var(--white);display:flex;flex-direction:column;align-items:center;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.wrap{position:relative;flex:1;min-height:0;width:100%;max-width:520px;display:flex;flex-direction:column}
+.track{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;touch-action:pan-x}
+.track::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;padding:12px 10px 4px}
+.slide img{max-width:100%;max-height:100%;width:auto;height:auto;border-radius:14px;box-shadow:0 10px 30px rgba(6,40,100,.35);user-select:none;-webkit-user-select:none}
+.nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--orange);font-size:24px;font-weight:700;line-height:44px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);display:none}
+.nav:disabled{opacity:0;pointer-events:none}
+.prev{left:6px} .next{right:6px}
+@media (hover:hover) and (pointer:fine){.nav{display:block}}
+.bar{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0 14px}
+.dots{display:flex;gap:8px}
+.dot{width:9px;height:9px;border-radius:5px;border:0;padding:0;background:rgba(255,255,255,.55);cursor:pointer;transition:width .25s,background .25s}
+.dot[aria-current="true"]{width:26px;background:var(--orange)}
+.hint{font-size:13px;color:var(--ink);opacity:.8;transition:opacity .4s}
+.hint.gone{opacity:0}
+button:focus-visible{outline:3px solid var(--white);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.track{scroll-behavior:auto}.dot{transition:none}}
+</style></head>
+<body>
+<main class="wrap" aria-roledescription="carousel" aria-label="체육대회 모바일 초대장">
+<div class="track" id="track" tabindex="0">
+<div class="slide" role="group" aria-roledescription="slide" aria-label="1 / 4"><img src="images/invitation-1.jpg" alt="2026 카라멜에셋 체육대회 초대 표지" draggable="false"></div>
+<div class="slide" role="group" aria-roledescription="slide" aria-label="2 / 4"><img src="images/invitation-2.jpg" alt="초대의 글" draggable="false"></div>
+<div class="slide" role="group" aria-roledescription="slide" aria-label="3 / 4"><img src="images/invitation-3.jpg" alt="오시는 길" draggable="false"></div>
+<div class="slide" role="group" aria-roledescription="slide" aria-label="4 / 4"><img src="images/invitation-4.jpg" alt="식사 및 경품 안내" draggable="false"></div>
+</div>
+<button class="nav prev" id="prev" aria-label="이전">‹</button>
+<button class="nav next" id="next" aria-label="다음">›</button>
+</main>
+<div class="bar">
+<div class="dots" id="dots"></div>
+<p class="hint" id="hint">좌우로 넘겨 보세요 · 1 / 4</p>
+</div>
+<script>
+const t=document.getElementById('track'),slides=[...t.children],dots=document.getElementById('dots'),hint=document.getElementById('hint'),prev=document.getElementById('prev'),next=document.getElementById('next');
+let cur=0,moved=false;
+slides.forEach((_,i)=>{const b=document.createElement('button');b.className='dot';b.setAttribute('aria-label',(i+1)+'번째 페이지');b.onclick=()=>go(i);dots.appendChild(b);});
+function go(i){i=Math.max(0,Math.min(slides.length-1,i));t.scrollTo({left:i*t.clientWidth,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});}
+function update(){const i=Math.round(t.scrollLeft/t.clientWidth);if(i!==cur){cur=i;if(!moved){moved=true;}}
+[...dots.children].forEach((d,k)=>d.setAttribute('aria-current',k===cur));prev.disabled=cur===0;next.disabled=cur===slides.length-1;
+hint.textContent=(moved?'':'좌우로 넘겨 보세요 · ')+(cur+1)+' / '+slides.length;}
+t.addEventListener('scroll',()=>requestAnimationFrame(update),{passive:true});
+prev.onclick=()=>go(cur-1);next.onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1);});
+addEventListener('resize',()=>t.scrollLeft=cur*t.clientWidth);
+update();
+</script>
+</body></html>
