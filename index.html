@@ -15,8 +15,12 @@ body{background:linear-gradient(180deg,#1569dc 0%,#2f95f2 55%,#8fdcf3 100%);font
 .wrap{position:relative;flex:1;min-height:0;width:100%;max-width:520px;display:flex;flex-direction:column}
 .track{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;touch-action:pan-x}
 .track::-webkit-scrollbar{display:none}
-.slide{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;padding:12px 10px 4px}
-.slide img{max-width:100%;max-height:100%;width:auto;height:auto;border-radius:14px;box-shadow:0 10px 30px rgba(6,40,100,.35);user-select:none;-webkit-user-select:none}
+.slide{position:relative;overflow:hidden;flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;padding:12px 10px 4px}
+.slide img{max-width:100%;max-height:100%;width:auto;height:auto;border-radius:14px;box-shadow:0 10px 30px rgba(6,40,100,.35);user-select:none;-webkit-user-select:none;transform-origin:center center;will-change:transform;transition:transform .25s ease}
+.slide img.live{transition:none}
+.slide.zoomed img{box-shadow:none;cursor:grab}
+.zoomout{position:absolute;top:14px;right:14px;z-index:2;display:none;border:0;border-radius:18px;padding:8px 14px;background:rgba(12,58,115,.85);color:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.zoomout.on{display:block}
 .nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--orange);font-size:24px;font-weight:700;line-height:44px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);display:none}
 .nav:disabled{opacity:0;pointer-events:none}
 .prev{left:6px} .next{right:6px}
@@ -40,23 +44,60 @@ button:focus-visible{outline:3px solid var(--white);outline-offset:2px}
 </div>
 <button class="nav prev" id="prev" aria-label="이전">‹</button>
 <button class="nav next" id="next" aria-label="다음">›</button>
+<button class="zoomout" id="zoomout">원래 크기로</button>
 </main>
 <div class="bar">
 <div class="dots" id="dots"></div>
-<p class="hint" id="hint">좌우로 넘겨 보세요 · 1 / 4</p>
+<p class="hint" id="hint">좌우로 넘겨 보세요 · 두 번 탭하면 확대 · 1 / 4</p>
 </div>
 <script>
 const t=document.getElementById('track'),slides=[...t.children],dots=document.getElementById('dots'),hint=document.getElementById('hint'),prev=document.getElementById('prev'),next=document.getElementById('next');
 let cur=0,moved=false;
 slides.forEach((_,i)=>{const b=document.createElement('button');b.className='dot';b.setAttribute('aria-label',(i+1)+'번째 페이지');b.onclick=()=>go(i);dots.appendChild(b);});
-function go(i){i=Math.max(0,Math.min(slides.length-1,i));t.scrollTo({left:i*t.clientWidth,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});}
+function go(i){reset();i=Math.max(0,Math.min(slides.length-1,i));t.scrollTo({left:i*t.clientWidth,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});}
 function update(){const i=Math.round(t.scrollLeft/t.clientWidth);if(i!==cur){cur=i;if(!moved){moved=true;}}
 [...dots.children].forEach((d,k)=>d.setAttribute('aria-current',k===cur));prev.disabled=cur===0;next.disabled=cur===slides.length-1;
-hint.textContent=(moved?'':'좌우로 넘겨 보세요 · ')+(cur+1)+' / '+slides.length;}
+hint.textContent=(moved?'':'좌우로 넘겨 보세요 · 두 번 탭하면 확대 · ')+(cur+1)+' / '+slides.length;}
 t.addEventListener('scroll',()=>requestAnimationFrame(update),{passive:true});
 prev.onclick=()=>go(cur-1);next.onclick=()=>go(cur+1);
 document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1);});
-addEventListener('resize',()=>t.scrollLeft=cur*t.clientWidth);
+addEventListener('resize',()=>{reset();t.scrollLeft=cur*t.clientWidth;});
+/* zoom */
+const zbtn=document.getElementById('zoomout');
+let Z={s:1,x:0,y:0,el:null};
+function center(img){const r=img.parentElement.getBoundingClientRect();return{x:r.left+img.offsetLeft+img.offsetWidth/2,y:r.top+img.offsetTop+img.offsetHeight/2,w:img.offsetWidth,h:img.offsetHeight};}
+function clampT(img){const c=center(img),mx=(Z.s-1)*c.w/2,my=(Z.s-1)*c.h/2;Z.x=Math.max(-mx,Math.min(mx,Z.x));Z.y=Math.max(-my,Math.min(my,Z.y));}
+function apply(img,live){img.classList.toggle('live',!!live);img.style.transform=`translate(${Z.x}px,${Z.y}px) scale(${Z.s})`;const on=Z.s>1.01;img.parentElement.classList.toggle('zoomed',on);t.style.overflowX=on?'hidden':'';t.style.touchAction=on?'none':'';zbtn.classList.toggle('on',on);}
+function reset(){if(Z.el){Z.s=1;Z.x=Z.y=0;apply(Z.el);}Z.el=null;}
+function zoomAt(img,qx,qy,s){if(Z.el&&Z.el!==img)reset();Z.el=img;const c=center(img);const px=(qx-c.x-Z.x)/Z.s,py=(qy-c.y-Z.y)/Z.s;Z.s=s;Z.x=qx-c.x-s*px;Z.y=qy-c.y-s*py;clampT(img);apply(img);}
+function toggle(img,qx,qy){if(Z.s>1.01&&Z.el===img)reset();else zoomAt(img,qx,qy,2.5);}
+zbtn.onclick=reset;
+document.addEventListener('gesturestart',e=>e.preventDefault());
+slides.forEach(sl=>{const img=sl.querySelector('img');let g=null,last=0,lx=0,ly=0;
+ const d=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+ sl.addEventListener('touchstart',e=>{const ts=e.touches;
+  if(ts.length===2){e.preventDefault();if(Z.el!==img){reset();Z.el=img;}const m={x:(ts[0].clientX+ts[1].clientX)/2,y:(ts[0].clientY+ts[1].clientY)/2},c=center(img);g={type:'pinch',d0:d(ts[0],ts[1]),s0:Z.s,px:(m.x-c.x-Z.x)/Z.s,py:(m.y-c.y-Z.y)/Z.s};}
+  else if(ts.length===1&&Z.el===img&&Z.s>1.01){g={type:'pan',x0:ts[0].clientX,y0:ts[0].clientY,tx:Z.x,ty:Z.y,moved:false};}
+  else g={type:'tap',x0:ts[0].clientX,y0:ts[0].clientY,moved:false};
+ },{passive:false});
+ sl.addEventListener('touchmove',e=>{if(!g)return;const ts=e.touches;
+  if(g.type==='pinch'&&ts.length===2){e.preventDefault();const m={x:(ts[0].clientX+ts[1].clientX)/2,y:(ts[0].clientY+ts[1].clientY)/2},c=center(img);Z.s=Math.max(1,Math.min(5,g.s0*d(ts[0],ts[1])/g.d0));Z.x=m.x-c.x-Z.s*g.px;Z.y=m.y-c.y-Z.s*g.py;clampT(img);apply(img,true);}
+  else if(g.type==='pan'&&ts.length===1){e.preventDefault();Z.x=g.tx+ts[0].clientX-g.x0;Z.y=g.ty+ts[0].clientY-g.y0;if(Math.abs(ts[0].clientX-g.x0)+Math.abs(ts[0].clientY-g.y0)>8)g.moved=true;clampT(img);apply(img,true);}
+  else if(ts.length===1&&Math.abs(ts[0].clientX-g.x0)+Math.abs(ts[0].clientY-g.y0)>8)g.moved=true;
+ },{passive:false});
+ sl.addEventListener('touchend',e=>{if(!g)return;if(e.touches.length)return;
+  if(g.type==='pinch'){if(Z.s<1.05)reset();else apply(img);}
+  else if(!g.moved){const ch=e.changedTouches[0],now=Date.now();if(now-last<300&&Math.hypot(ch.clientX-lx,ch.clientY-ly)<30){e.preventDefault();toggle(img,ch.clientX,ch.clientY);last=0;}else{last=now;lx=ch.clientX;ly=ch.clientY;}}
+  else if(Z.el===img)apply(img);
+  g=null;},{passive:false});
+ sl.addEventListener('dblclick',e=>toggle(img,e.clientX,e.clientY));
+ let md=null;
+ sl.addEventListener('mousedown',e=>{if(Z.el===img&&Z.s>1.01){md={x0:e.clientX,y0:e.clientY,tx:Z.x,ty:Z.y};e.preventDefault();}});
+ addEventListener('mousemove',e=>{if(!md)return;Z.x=md.tx+e.clientX-md.x0;Z.y=md.ty+e.clientY-md.y0;clampT(img);apply(img,true);});
+ addEventListener('mouseup',()=>{if(md){md=null;apply(img);}});
+ sl.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const s=Math.max(1,Math.min(5,(Z.el===img?Z.s:1)*Math.exp(-e.deltaY*0.01)));if(s<=1.01){reset();return;}zoomAt(img,e.clientX,e.clientY,s);},{passive:false});
+});
+
 update();
 </script>
 </body></html>
