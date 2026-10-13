@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/og.js": { "includeFiles": "images/invitation-1.jpg" }
+  },
+  "rewrites": [
+    { "source": "/og.jpg", "destination": "/api/og" }
+  ]
+}

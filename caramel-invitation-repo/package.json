@@ -1,0 +1,6 @@
+{
+  "name": "caramel-invitation",
+  "private": true,
+  "engines": { "node": "22.x" },
+  "dependencies": { "sharp": "0.33.5" }
+}

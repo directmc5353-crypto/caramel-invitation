@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2026 카라멜에셋 체육대회 초대장</title>
+<meta property="og:title" content="2026 카라멜에셋 체육대회 초대장">
+<meta property="og:description" content="2026.10.20(화) 09:00 새마을 중앙 연수원">
+<meta property="og:url" content="https://caramel-invitation-olive.vercel.app/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://caramel-invitation-olive.vercel.app/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="theme-color" content="#1e7ff0">
+<style>:root{--sky:#2a7ff2;--orange:#ff7a1a;--white:#fff;--ink:#0c3a73;box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit;margin:0}
+html,body{height:100%;margin:0}
+html,body{background:var(--sky)}
+body{overflow-x:hidden;font-family:"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif;color:var(--white);-webkit-tap-highlight-color:transparent}
+.page{position:relative;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{position:relative;flex:none;--w:min(100vw,640px);width:var(--w);height:calc(var(--w)*1100/640);overflow:hidden}
+.backdrop{position:fixed;inset:-40px;background-size:cover;background-position:center;filter:blur(24px) saturate(1.1);opacity:.85;transition:background-image .3s}
+.track{width:100%;height:100%;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+.track::-webkit-scrollbar{display:none}
+.slide{position:relative;overflow:hidden;flex:0 0 100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;background:var(--sky)}
+.slide img{display:block;width:100%;height:100%;object-fit:fill;object-position:center center;user-select:none;-webkit-user-select:none;transform-origin:center center;will-change:transform;transition:transform .25s ease}
+.slide img{position:relative}
+.slide img.live{transition:none}
+.slide.zoomed img{cursor:grab}
+.zoomout{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;z-index:3;display:none;border:0;border-radius:18px;padding:8px 14px;background:rgba(12,58,115,.85);color:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.zoomout.on{display:block}
+.nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--orange);font-size:24px;font-weight:700;line-height:44px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);display:none}
+.nav:disabled{opacity:0;pointer-events:none}
+.prev{left:8px} .next{right:8px}
+@media (hover:hover) and (pointer:fine){.nav{display:block}}
+.bar{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0 12px}
+.dots{display:flex;gap:7px;padding:6px 10px;border-radius:12px;background:rgba(12,58,115,.35);pointer-events:auto}
+.dot{width:8px;height:8px;border-radius:4px;border:0;padding:0;background:rgba(255,255,255,.75);cursor:pointer;transition:width .25s,background .25s}
+.dot[aria-current="true"]{width:22px;background:var(--orange)}
+.hint{font-size:12px;color:#fff;background:rgba(12,58,115,.45);padding:5px 12px;border-radius:12px;transition:opacity .5s;white-space:nowrap}
+.hint.gone{display:none}
+button:focus-visible{outline:3px solid var(--white);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.track{scroll-behavior:auto}.dot{transition:none}}
+</style></head>
+<body>
+<div class="backdrop" id="backdrop"></div>
+<div class="page">
+<main class="wrap" aria-roledescription="carousel" aria-label="체육대회 모바일 초대장">
+<div class="track" id="track" tabindex="0">
+<div class="slide" role="group" aria-roledescription="slide" aria-label="1 / 4"><img src="images/invitation-1.jpg" alt="2026 카라멜에셋 체육대회 초대 표지" draggable="false"></div>
+<div class="slide" role="group" aria-roledescription="slide" aria-label="2 / 4"><img src="images/invitation-2.jpg" alt="초대의 글" draggable="false"></div>
+<div class="slide" role="group" aria-roledescription="slide" aria-label="3 / 4"><img src="images/invitation-3.jpg" alt="오시는 길" draggable="false"></div>
+<div class="slide" role="group" aria-roledescription="slide" aria-label="4 / 4"><img src="images/invitation-4.jpg" alt="식사 및 경품 안내" draggable="false"></div>
+</div>
+<button class="nav prev" id="prev" aria-label="이전">‹</button>
+<button class="nav next" id="next" aria-label="다음">›</button>
+<button class="zoomout" id="zoomout">원래 크기로</button>
+
+</main>
+<div class="bar">
+<div class="dots" id="dots"></div>
+</div>
+</div>
+
+<script>
+const t=document.getElementById('track'),slides=[...t.children],dots=document.getElementById('dots'),hint={classList:{add(){}}},prev=document.getElementById('prev'),next=document.getElementById('next');
+let cur=0,moved=false;
+slides.forEach((_,i)=>{const b=document.createElement('button');b.className='dot';b.setAttribute('aria-label',(i+1)+'번째 페이지');b.onclick=()=>go(i);dots.appendChild(b);});
+function go(i){reset();i=Math.max(0,Math.min(slides.length-1,i));t.scrollTo({left:i*t.clientWidth,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});}
+function update(){const i=Math.round(t.scrollLeft/t.clientWidth);if(i!==cur){cur=i;if(!moved){moved=true;hint.classList.add('gone');}}
+[...dots.children].forEach((d,k)=>d.setAttribute('aria-current',k===cur));prev.disabled=cur===0;next.disabled=cur===slides.length-1;document.getElementById('backdrop').style.backgroundImage='url('+slides[cur].querySelector('img').getAttribute('src')+')';}
+setTimeout(()=>hint.classList.add('gone'),4000);
+/* 가로 꽉 채우기: 세로가 6% 이내로만 넘치면 가로에 맞추고 위아래를 살짝 잘라냄 */
+const W0=document.querySelector('.wrap');function fit(){const vw=document.documentElement.clientWidth,vh=window.innerHeight;let w=Math.min(vw,640);if(vw>=700&&w*1100/640>vh-60)w=(vh-60)*640/1100;W0.style.setProperty('--w',w+'px');t.scrollLeft=cur*t.clientWidth;}
+fit();addEventListener('resize',fit);
+t.addEventListener('scroll',()=>requestAnimationFrame(update),{passive:true});
+prev.onclick=()=>go(cur-1);next.onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1);});
+addEventListener('resize',()=>{reset();t.scrollLeft=cur*t.clientWidth;});
+/* zoom */
+const zbtn=document.getElementById('zoomout');
+let Z={s:1,x:0,y:0,el:null};
+function center(img){const r=img.parentElement.getBoundingClientRect();return{x:r.left+img.offsetLeft+img.offsetWidth/2,y:r.top+img.offsetTop+img.offsetHeight/2,w:img.offsetWidth,h:img.offsetHeight};}
+function clampT(img){const c=center(img),mx=(Z.s-1)*c.w/2,my=(Z.s-1)*c.h/2;Z.x=Math.max(-mx,Math.min(mx,Z.x));Z.y=Math.max(-my,Math.min(my,Z.y));}
+function apply(img,live){img.classList.toggle('live',!!live);img.style.transform=`translate(${Z.x}px,${Z.y}px) scale(${Z.s})`;const on=Z.s>1.01;img.parentElement.classList.toggle('zoomed',on);t.style.overflowX=on?'hidden':'';t.style.touchAction=on?'none':'';zbtn.classList.toggle('on',on);}
+function reset(){if(Z.el){Z.s=1;Z.x=Z.y=0;apply(Z.el);}Z.el=null;}
+function zoomAt(img,qx,qy,s){if(Z.el&&Z.el!==img)reset();Z.el=img;const c=center(img);const px=(qx-c.x-Z.x)/Z.s,py=(qy-c.y-Z.y)/Z.s;Z.s=s;Z.x=qx-c.x-s*px;Z.y=qy-c.y-s*py;clampT(img);apply(img);}
+function toggle(img,qx,qy){if(Z.s>1.01&&Z.el===img)reset();else zoomAt(img,qx,qy,2.5);}
+zbtn.onclick=reset;
+document.addEventListener('gesturestart',e=>e.preventDefault());
+slides.forEach(sl=>{const img=sl.querySelector('img');let g=null,last=0,lx=0,ly=0;
+ const d=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+ sl.addEventListener('touchstart',e=>{const ts=e.touches;
+  if(ts.length===2){e.preventDefault();if(Z.el!==img){reset();Z.el=img;}const m={x:(ts[0].clientX+ts[1].clientX)/2,y:(ts[0].clientY+ts[1].clientY)/2},c=center(img);g={type:'pinch',d0:d(ts[0],ts[1]),s0:Z.s,px:(m.x-c.x-Z.x)/Z.s,py:(m.y-c.y-Z.y)/Z.s};}
+  else if(ts.length===1&&Z.el===img&&Z.s>1.01){g={type:'pan',x0:ts[0].clientX,y0:ts[0].clientY,tx:Z.x,ty:Z.y,moved:false};}
+  else g={type:'tap',x0:ts[0].clientX,y0:ts[0].clientY,moved:false};
+ },{passive:false});
+ sl.addEventListener('touchmove',e=>{if(!g)return;const ts=e.touches;
+  if(g.type==='pinch'&&ts.length===2){e.preventDefault();const m={x:(ts[0].clientX+ts[1].clientX)/2,y:(ts[0].clientY+ts[1].clientY)/2},c=center(img);Z.s=Math.max(1,Math.min(5,g.s0*d(ts[0],ts[1])/g.d0));Z.x=m.x-c.x-Z.s*g.px;Z.y=m.y-c.y-Z.s*g.py;clampT(img);apply(img,true);}
+  else if(g.type==='pan'&&ts.length===1){e.preventDefault();Z.x=g.tx+ts[0].clientX-g.x0;Z.y=g.ty+ts[0].clientY-g.y0;if(Math.abs(ts[0].clientX-g.x0)+Math.abs(ts[0].clientY-g.y0)>8)g.moved=true;clampT(img);apply(img,true);}
+  else if(ts.length===1&&Math.abs(ts[0].clientX-g.x0)+Math.abs(ts[0].clientY-g.y0)>8)g.moved=true;
+ },{passive:false});
+ sl.addEventListener('touchend',e=>{if(!g)return;if(e.touches.length)return;
+  if(g.type==='pinch'){if(Z.s<1.05)reset();else apply(img);}
+  else if(!g.moved){const ch=e.changedTouches[0],now=Date.now();if(now-last<300&&Math.hypot(ch.clientX-lx,ch.clientY-ly)<30){e.preventDefault();toggle(img,ch.clientX,ch.clientY);last=0;}else{last=now;lx=ch.clientX;ly=ch.clientY;}}
+  else if(Z.el===img)apply(img);
+  g=null;},{passive:false});
+ sl.addEventListener('dblclick',e=>toggle(img,e.clientX,e.clientY));
+ let md=null;
+ sl.addEventListener('mousedown',e=>{if(Z.el===img&&Z.s>1.01){md={x0:e.clientX,y0:e.clientY,tx:Z.x,ty:Z.y};e.preventDefault();}});
+ addEventListener('mousemove',e=>{if(!md)return;Z.x=md.tx+e.clientX-md.x0;Z.y=md.ty+e.clientY-md.y0;clampT(img);apply(img,true);});
+ addEventListener('mouseup',()=>{if(md){md=null;apply(img);}});
+ sl.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const s=Math.max(1,Math.min(5,(Z.el===img?Z.s:1)*Math.exp(-e.deltaY*0.01)));if(s<=1.01){reset();return;}zoomAt(img,e.clientX,e.clientY,s);},{passive:false});
+});
+
+update();
+</script>
+</body></html>
